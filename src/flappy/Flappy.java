@@ -11,15 +11,16 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class Flappy implements ActionListener, MouseListener {
-	
+	int score=0;
 	 public static Flappy flappy;
 	 Dimension screenSize;
 	 public Renderer renderer;
 	 public int width,height,yMontion=0,ticks=0;
 	 Random rand;
-	 public Rectangle bird;
+	 public Rectangle bird,lastColumn;
 	 public ArrayList<Rectangle> columns;
 	 boolean gameOver=false,start=false;
+	int speed=8;
 	 
 public Flappy ()
 {
@@ -40,6 +41,7 @@ public Flappy ()
 	jframe.add(renderer);
 	
 	bird = new Rectangle(width/2-10,height/2-10,20,20);
+	lastColumn=bird;
 	columns = new ArrayList<Rectangle>();
 	
 	addColumn(true);
@@ -56,17 +58,19 @@ public Flappy ()
 
 public void addColumn (boolean start)
 {
-	int space=300;
+	int randomSpaceheight=250+rand.nextInt(50)-speed;
+	int randomSpace=200+rand.nextInt(100);
 	int randomWidth=50+rand.nextInt(50);
 	int randomheight=50+rand.nextInt(300);
 	
+	
 	if(start) {
 		columns.add(new Rectangle(width + randomWidth + columns.size() * 300, height - randomheight - 150, randomWidth , randomheight));
-		columns.add(new Rectangle(width + randomWidth + (columns.size()-1)*300, 0 , randomWidth ,height - randomheight - space));
+		columns.add(new Rectangle(width + randomWidth + (columns.size()-1)*300, 0 , randomWidth ,height - randomheight - randomSpaceheight));
 	}
 	else {
-		columns.add(new Rectangle(columns.get(columns.size()-1).x + 600, height - randomheight - 150, randomWidth , randomheight));
-		columns.add(new Rectangle(columns.get(columns.size()-1).x, 0 , randomWidth ,height - randomheight - space));
+		columns.add(new Rectangle(columns.get(columns.size()-1).x + randomSpace*2, height - randomheight - 150, randomWidth , randomheight));
+		columns.add(new Rectangle(columns.get(columns.size()-1).x, 0 , randomWidth ,height - randomheight - randomSpaceheight));
 	}
 	}
 
@@ -79,6 +83,7 @@ public void paintColumn (Graphics g, Rectangle column) {
 	
 public void repaint(Graphics g) {
 	
+
 	g.setColor(Color.cyan);
 	g.fillRect(0, 0, width, height);
 	
@@ -99,6 +104,10 @@ public void repaint(Graphics g) {
 	g.setColor(Color.white);
 	g.setFont(new Font ("Arial",1,100));
 	
+	g.drawString(String.valueOf(score), width/2, 90);
+	if(!start) {
+		g.drawString("Click to start", width/2 - 250, height/2);
+	}
 	if(gameOver)
 	{
 		g.drawString("Game Over", width/2 - 250, height/2);
@@ -108,8 +117,9 @@ public void repaint(Graphics g) {
 
 @Override
 public void actionPerformed(ActionEvent arg0) {
-	int speed=8;
-	
+
+	speed = score/10 + 8; 
+
 	if(start) {
 	ticks++;
 	
@@ -129,17 +139,24 @@ public void actionPerformed(ActionEvent arg0) {
 	
 	for(Rectangle column : columns)
 	{
-		if(column.intersects(bird))
+		if(column.y== 0 && bird.x + bird.width / 2 > column.x + column.width / 2 - 5 &&  bird.x + bird.width / 2 < column.x + column.width / 2 + 5)
+			score++;
+		if(column.intersects(bird)) {
 		gameOver=true;
+		lastColumn = column;
+	}
 	}
 	
-	if(bird.y<0 || bird.y > height - 150)
-		gameOver=true;
+	if(bird.y<0 || bird.y > height - 170) {
+	gameOver=true;	
+	bird.y=height-150-bird.height;
+	}
 	
-
+	if(gameOver)
+	bird.x=lastColumn.x-bird.width;
 	
 	renderer.repaint();
-	
+
 	for (int i =0 ; i<columns.size();i++)
 	{
 		Rectangle column = columns.get(i);
@@ -159,13 +176,34 @@ public void actionPerformed(ActionEvent arg0) {
 
 public void jump ()
 {
+	if(gameOver)
+	{
+		
+		columns.clear();
+		addColumn(true);
+		addColumn(true);
+		addColumn(true);
+		addColumn(true);
+		addColumn(true);
+		addColumn(true);
+		bird = new Rectangle(width/2-10,height/2-10,20,20);
+		lastColumn=bird;
+		gameOver=false;
+		start=false;
+		yMontion = 0;
+		score=0;
+		renderer.repaint();
+	}
+	else
+	{	
 	if(!start)
 		start=true;
 	else
 	{
-	if(yMontion > 0) {
+	if(yMontion > 0) 
 	yMontion = 0;
 	yMontion -= 10;
+	
 	}
 	}
 }
@@ -178,7 +216,7 @@ public static void main (String [] Args) {
 @Override
 public void mouseClicked(MouseEvent arg0) {
 
-	jump();
+	//jump();
 	
 }
 
